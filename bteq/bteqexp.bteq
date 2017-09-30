@@ -1,0 +1,9 @@
+/* Generated script example /*
+.logon [logon details passed from expbteq.sh]
+.EXPORT REPORT FILE = [export file path passed from expbteq.sh]
+.SET WIDTH 6531;
+.SET TITLEDASHES OFF;
+.SET SEPARATOR ',';
+[sql statement passed from expbteq.sh]
+.Export RESET
+.logoff;
