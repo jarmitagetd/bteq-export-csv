@@ -1,8 +1,10 @@
 #!/bin/bash
 #------------------------------------------------------------------------------------------#
 #  SCRIPT:   BTEQ DYNAMIC EXPORT TO CSV                                                    #
-#  VERSION:  1.0                                                                           #
+#  VERSION:  1.1                                                                           #
 #  RELEASED: 28/09/2017                                                                    #
+#  NOTES:    Ability to process where clause predicates added (see sql/bteqexp.sql         #
+#            echos to terminal removed from 1.0                                            #
 #  AUTHOR:   James Armitage, Teradata                                                      #
 #  EMAIL:    james.armitage@teradata.com                                                   #
 #  STYLE:    https://google.github.io/styleguide/shell.xml                                 #
@@ -28,7 +30,8 @@ readonly DIRPRM=param
 # declare variables
 sq=bteqexp.sql
 bt=bteqexp.bteq
-st="$(cat $DIRSQL"/"$sq)"
+sl="$(cat $DIRSQL"/"$sq | grep SELECT)"
+pd="$(cat $DIRSQL"/"$sq | grep WHERE)"
 rf=objects.txt
 
 # stdout and stderr to terminal and log file
@@ -48,25 +51,19 @@ fl="$DIRPRM"/"$rf"
 # but quick, simple and works
 while read -r db ob; do
 
-  echo BUILD BTEQ EXPORT SCRIPT FOR "$db"."$ob" STARTED
-
-  # add your tdip, username and password
-  echo ".logon [tdip/username],[password] ;" > "$DIRBTQ"/"$bt"
+  echo ".logon [tdip]/[username], [password];" > "$DIRBTQ"/"$bt"
   echo ".EXPORT REPORT FILE = "$PWD"/"$DIROUT"/"$ob".txt" >> "$DIRBTQ"/"$bt"
   echo ".SET WIDTH 6531;" >> "$DIRBTQ"/"$bt"
   echo ".SET TITLEDASHES OFF;" >> "$DIRBTQ"/"$bt"
   echo ".SET SEPARATOR ',';" >> "$DIRBTQ"/"$bt"
-  echo "$st" "$db"."$ob;" >> "$DIRBTQ"/"$bt"
+  echo "$sl" FROM "$db"."$ob" >> "$DIRBTQ"/"$bt"
+  echo "$pd;" >> "$DIRBTQ"/"$bt"
   echo ".Export RESET" >> "$DIRBTQ"/"$bt"
   echo ".logoff;" >> "$DIRBTQ"/"$bt"
 
-  echo BUILD BTEQ EXPORT SCRIPT FOR "$db"."$ob" COMPLETE
-
   echo RUN BTEQ EXPORT
   bteq < "$DIRBTQ"/"$bt"
-
-  echo REMOVE WHITESPACE FROM BTEQ OUTPUT FILE
-
+ 
   sed -i -e 's/ //g' "$DIROUT"/"$ob".txt
 
 done < $fl
